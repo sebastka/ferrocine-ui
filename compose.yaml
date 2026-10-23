@@ -1,0 +1,24 @@
+# Development: the UI image in front of a Ferrocine core running on this host.
+#
+#   (in the core's checkout) cargo run -- run    # core on 0.0.0.0:8096, server.public_url http://localhost:8080
+#   docker compose up -d --build                 # UI on http://localhost:8080
+#
+# The core must listen on 0.0.0.0 (not 127.0.0.1): with rootless Docker, host.docker.internal
+# reaches the host's external addresses only. For hot reload, use `npm run dev` instead
+# (Vite on :5173, proxying /api/ and /auth/ to 127.0.0.1:8096; public_url http://localhost:5173).
+services:
+  ui:
+    build: .
+    image: ferrocine-ui:dev
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:${UI_PORT:-8080}:8080'
+    environment:
+      FERROCINE_UPSTREAM: http://host.docker.internal:${FERROCINE_PORT:-8096}
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']

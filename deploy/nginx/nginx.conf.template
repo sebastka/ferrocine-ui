@@ -1,0 +1,109 @@
+# nginx configuration of the Ferrocine UI image, rendered at start by docker-entrypoint.sh:
+#   @UPSTREAM@  the core, from FERROCINE_UPSTREAM (scheme://host:port, no path)
+#   @RESOLVER@  name servers of /etc/resolv.conf (or NGINX_RESOLVER)
+# Everything nginx writes goes to /tmp/nginx, so the root filesystem can be read-only.
+
+# Static files and a proxy: two workers are plenty, whatever the host's core count.
+worker_processes 2;
+pid /tmp/nginx/nginx.pid;
+error_log /dev/stderr notice;
+pcre_jit on;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    types {
+        application/vnd.apple.mpegurl m3u8;
+        text/vtt vtt;
+    }
+
+    server_tokens off;
+    sendfile on;
+    tcp_nopush on;
+    client_max_body_size 1m;
+
+    client_body_temp_path /tmp/nginx/client_body;
+    proxy_temp_path /tmp/nginx/proxy;
+    fastcgi_temp_path /tmp/nginx/fastcgi;
+    uwsgi_temp_path /tmp/nginx/uwsgi;
+    scgi_temp_path /tmp/nginx/scgi;
+
+    log_format main '$remote_addr - [$time_local] "$request" $status $body_bytes_sent '
+                    '"$http_referer" "$http_user_agent" $request_time';
+    access_log /dev/stdout main;
+
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_types text/css application/javascript application/json image/svg+xml
+               application/vnd.apple.mpegurl text/vtt;
+
+    # The core is addressed through a variable, so nginx resolves its name at request time:
+    # the UI starts (and recovers) whether or not the core is up yet.
+    resolver @RESOLVER@ valid=30s;
+
+    # Keep the scheme a TLS-terminating proxy in front of us saw.
+    map $http_x_forwarded_proto $forwarded_proto {
+        default $http_x_forwarded_proto;
+        '' $scheme;
+    }
+
+    server {
+        listen 8080;
+        root /usr/share/ferrocine-ui;
+        set $core @UPSTREAM@;
+
+        # Liveness of this container itself; /healthz and /readyz are the core's.
+        location = /ui-healthz {
+            access_log off;
+            default_type text/plain;
+            return 200 "ok\n";
+        }
+
+        # Hashed build output: cache forever.
+        location /assets/ {
+            include /etc/ferrocine-ui/security-headers.conf;
+            add_header Cache-Control "public, max-age=31536000, immutable" always;
+            try_files $uri =404;
+        }
+
+        # Everything else is the single-page app; index.html is always revalidated, so a new
+        # release is picked up on the next load.
+        location / {
+            include /etc/ferrocine-ui/security-headers.conf;
+            add_header Cache-Control "no-cache" always;
+            try_files $uri /index.html;
+        }
+
+        location /api/ {
+            include /etc/ferrocine-ui/proxy.conf;
+        }
+
+        # Media: stream as it comes (no buffering to disk), Range requests passed through.
+        location /api/v1/hls/ {
+            include /etc/ferrocine-ui/proxy.conf;
+            proxy_buffering off;
+            proxy_request_buffering off;
+        }
+        location ~ ^/api/v1/items/[0-9]+/stream$ {
+            include /etc/ferrocine-ui/proxy.conf;
+            proxy_buffering off;
+            proxy_request_buffering off;
+            proxy_max_temp_file_size 0;
+        }
+
+        location /auth/ {
+            include /etc/ferrocine-ui/proxy.conf;
+        }
+        location = /healthz {
+            include /etc/ferrocine-ui/proxy.conf;
+        }
+        location = /readyz {
+            include /etc/ferrocine-ui/proxy.conf;
+        }
+    }
+}
