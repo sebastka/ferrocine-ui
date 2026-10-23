@@ -6,7 +6,7 @@
   "type": "module",
   "description": "Web UI of Ferrocine: browse the libraries and play media",
   "engines": {
-    "node": ">=26.0.0"
+    "node": ">=26.12.0"
   },
   "scripts": {
     "dev": "vite",
