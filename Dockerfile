@@ -24,7 +24,10 @@ RUN npm run build
 
 FROM dhi.io/nginx:1-alpine3.24@sha256:6d3811fbc76c5d0652752b39a003769759ccfeb2c1e874bacf99e3d44e5da3b9 AS runtime
 ARG REVISION=unknown
+# The release tag (e.g. 2026-10-23), or edge-<commit>.
+ARG VERSION=dev
 LABEL org.opencontainers.image.title="ferrocine-ui" \
+      org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.description="Web UI of Ferrocine, a self-hosted media server" \
       org.opencontainers.image.source="https://github.com/sebastka/ferrocine-ui" \
       org.opencontainers.image.licenses="MIT" \

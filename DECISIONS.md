@@ -223,8 +223,12 @@ edited in files and applied with "Reload configuration". The formatting rules ar
 
 CI runs typecheck, lint, format check, unit tests, build, yamllint and a Docker build with a
 smoke test (read-only, no capability, no core). Releases build amd64 and arm64 natively and
-push `ghcr.io/sebastka/ferrocine-ui` (`edge` from `master`, semver from `v*` tags) with SBOM
-and provenance. Actions are pinned by SHA; Renovate (nightly, auto-merge of non-majors after 3
+push `ghcr.io/sebastka/ferrocine-ui` with SBOM and provenance: `edge` and `sha-<commit>` from
+`master`, and dated releases (`YYYY-MM-DD`, `.1`, `.2`… for further releases the same day,
+and `latest`, with a Git tag and a GitHub release) when the workflow is run by hand, like the
+server. Every image is signed with cosign
+(keyless, by the release workflow's identity) and gets a build provenance attestation, both
+verified before a release is created. Actions are pinned by SHA; Renovate (nightly, auto-merge of non-majors after 3
 days) covers npm, the Dockerfile images, Actions and yamllint. The TypeScript aliases are
 updated by hand, together with typescript-eslint.
 
