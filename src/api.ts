@@ -139,6 +139,17 @@ export interface Rating {
   max: number;
 }
 
+/** Seek bar preview sheets of an item. */
+export interface Trickplay {
+  interval_ms: number;
+  width: number;
+  height: number;
+  columns: number;
+  rows: number;
+  thumbnails: number;
+  sheets: string[];
+}
+
 export interface ItemDetail extends ItemSummary {
   overview: string | null;
   tagline: string | null;
@@ -151,6 +162,8 @@ export interface ItemDetail extends ItemSummary {
   people: Person[];
   provider_ids: Partial<Record<ProviderId, string | null>>;
   ratings: Rating[];
+  /** Seek bar previews; null until made. */
+  trickplay?: Trickplay | null;
   media: MediaInfo | null;
 }
 

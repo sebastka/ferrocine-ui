@@ -141,6 +141,15 @@ formatting is pure and unit-tested (`src/logic/ratings.ts`).
 - **Extras** are a row on the movie page whose cards start playing at once (resuming like any
   item); an extra's own page is the same item page with its type and a link back to the movie.
 
+### D7f. Seek bar previews
+
+Hovering (mouse), dragging (touch) or focusing (keyboard) the seek bar shows a box with the
+trickplay frame, the chapter and the time. Frames are cut from the sheets with CSS
+(`background-position`, scaled with `background-size`), so one immutable JPEG serves 100 frames;
+a sheet is fetched only when a position in it is hovered, and the last frame stays on screen
+until the next sheet has loaded, so the box never blinks empty. The box is `aria-hidden`: the
+range input keeps its value text. The math is pure and tested (`src/logic/trickplay.ts`).
+
 ### D8. Next episode
 
 At the end of an episode (and in its last 30 s), an "Up next" card offers the next episode:
