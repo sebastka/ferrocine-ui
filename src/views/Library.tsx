@@ -121,8 +121,8 @@ export function Library({ id }: { id: string }) {
         <input
           type="search"
           className="input"
-          placeholder="Filter by title"
-          aria-label="Filter by title"
+          placeholder="Filter: titles, cast, crew…"
+          aria-label="Filter by title, cast or crew"
           value={filters.q}
           onChange={(e) => set('q', e.target.value)}
         />
