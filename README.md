@@ -39,6 +39,8 @@ frames from the films.
 - **Administration:** the running configuration (every setting with its value, default, description
   and alternatives; secrets only as set or not), configuration reload (with its report), ffmpeg and hardware acceleration in use,
   library scans (with or without a metadata refresh), active transcodes.
+- **Devices:** a pairing page (`/pair`, the target of the TV app's QR code) to sign a TV app in
+  with its code, and the list of signed-in devices on the profile page, each with a sign-out.
 - **Account:** the user's picture from the identity provider (or their initials) in the header,
   with a menu to the profile page (name, e-mail, role, groups) and to log out.
 - Light and dark themes: follows the system, or forced from the account menu or the profile page

@@ -8,6 +8,7 @@ export type Route =
   | { name: 'search'; q: string }
   | { name: 'admin' }
   | { name: 'profile' }
+  | { name: 'pair'; code: string }
   | { name: 'notFound' };
 
 export function parseRoute(pathname: string, search: string): Route {
@@ -28,6 +29,7 @@ export function parseRoute(pathname: string, search: string): Route {
   if (head === 'search' && parts.length === 1) return { name: 'search', q: params.get('q') ?? '' };
   if (head === 'admin' && parts.length === 1) return { name: 'admin' };
   if (head === 'profile' && parts.length === 1) return { name: 'profile' };
+  if (head === 'pair' && parts.length === 1) return { name: 'pair', code: params.get('code') ?? '' };
   return { name: 'notFound' };
 }
 
@@ -39,6 +41,7 @@ export const paths = {
   search: (q: string) => (q ? `/search?q=${encodeURIComponent(q)}` : '/search'),
   admin: () => '/admin',
   profile: () => '/profile',
+  pair: (code = '') => (code ? `/pair?code=${encodeURIComponent(code)}` : '/pair'),
 };
 
 /** A `return_to` for sign-in: a local path only, never `//host` (open redirect). */

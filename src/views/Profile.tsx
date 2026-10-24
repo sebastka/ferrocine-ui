@@ -1,6 +1,7 @@
 // The signed-in user, as the identity provider describes them.
 
 import { Avatar } from '../components/Avatar.tsx';
+import { Devices } from '../components/Devices.tsx';
 import { LogoutIcon } from '../components/icons.tsx';
 import { ThemeIcon } from '../components/ThemeIcon.tsx';
 import { useSession } from '../context.ts';
@@ -76,6 +77,7 @@ export function Profile() {
           </form>
         </div>
       </div>
+      <Devices />
     </div>
   );
 }

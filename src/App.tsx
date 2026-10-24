@@ -10,6 +10,7 @@ import { Item } from './views/Item.tsx';
 import { Library as LibraryView } from './views/Library.tsx';
 import { NotFound } from './views/NotFound.tsx';
 import { Player } from './views/Player.tsx';
+import { Pair } from './views/Pair.tsx';
 import { Profile } from './views/Profile.tsx';
 import { Search } from './views/Search.tsx';
 import { SignIn } from './views/SignIn.tsx';
@@ -76,6 +77,7 @@ export function App() {
         {route.name === 'search' && <Search initial={route.q} />}
         {route.name === 'admin' && <Admin />}
         {route.name === 'profile' && <Profile />}
+        {route.name === 'pair' && <Pair initial={route.code} />}
         {route.name === 'notFound' && <NotFound />}
       </main>
     </SessionContext>
