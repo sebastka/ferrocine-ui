@@ -24,10 +24,12 @@ import {
   RewindIcon,
   SettingsIcon,
   SubtitlesIcon,
+  ChaptersIcon,
   VolumeIcon,
 } from '../components/icons.tsx';
 import { ErrorBox, Spinner } from '../components/ui.tsx';
 import { useAsync } from '../hooks.ts';
+import { chapterLabel, chapterMarks, currentChapter } from '../logic/extras.ts';
 import { channels, clock, episodeCode, language } from '../logic/format.ts';
 import { nearEnd, QUALITIES, resumePosition } from '../logic/playback.ts';
 import { paths } from '../logic/route.ts';
@@ -59,7 +61,7 @@ async function findNext(item: ItemDetail): Promise<ItemSummary | null> {
   return (await api.children(nextSeason.id))[0] ?? null;
 }
 
-type Menu = 'audio' | 'subtitles' | 'quality' | null;
+type Menu = 'audio' | 'subtitles' | 'chapters' | 'quality' | null;
 
 function PlayerView({ item, fromStart }: { item: ItemDetail; fromStart: boolean }) {
   const root = useRef<HTMLDivElement>(null);
@@ -214,10 +216,14 @@ function PlayerView({ item, fromStart }: { item: ItemDetail; fromStart: boolean 
   const shown = drag ?? s?.position ?? 0;
   const pct = (ms: number) => (duration > 0 ? Math.min(100, Math.max(0, (ms / duration) * 100)) : 0);
   const pb = s?.playback ?? null;
-  const textSubs = [
+  // Text subtitles come as WebVTT tracks; bitmap ones (PGS, DVD) are burned into the picture.
+  const subs = [
     ...(item.media?.subtitles ?? []),
     ...downloaded.filter((d) => !item.media?.subtitles.some((x) => x.index === d.index)),
-  ].filter((x) => x.text);
+  ];
+  const chapters = item.media?.chapters ?? [];
+  const marks = chapterMarks(chapters, duration);
+  const chapterNow = currentChapter(chapters, s?.position ?? 0);
   // Only movies and episodes have files to find subtitles for.
   const canSearch = searchAvailable && item.media !== null;
   const audio = item.media?.audio ?? [];
@@ -303,6 +309,12 @@ function PlayerView({ item, fromStart }: { item: ItemDetail; fromStart: boolean 
             <dd>{pb.method}</dd>
             <dt>Acceleration</dt>
             <dd>{pb.method === 'transcode' ? (pb.hw_accel ?? 'software') : '—'}</dd>
+            {pb.burned_subtitle != null && (
+              <>
+                <dt>Subtitles</dt>
+                <dd>burned into the picture (track {pb.burned_subtitle})</dd>
+              </>
+            )}
             {pb.tone_mapping && (
               <>
                 <dt>Colour</dt>
@@ -361,7 +373,7 @@ function PlayerView({ item, fromStart }: { item: ItemDetail; fromStart: boolean 
                   ctl.current?.setSubtitle(null);
                 }}
               />
-              {textSubs.map((t) => (
+              {subs.map((t) => (
                 <MenuItem
                   key={t.index}
                   active={s.subtitleIndex === t.index}
@@ -375,6 +387,7 @@ function PlayerView({ item, fromStart }: { item: ItemDetail; fromStart: boolean 
                       .filter(Boolean)
                       .join(' · ') || `Track ${t.index}`
                   }
+                  hint={t.text ? undefined : '(burned in)'}
                   onSelect={() => {
                     setMenu(null);
                     ctl.current?.setSubtitle(t.index);
@@ -393,6 +406,19 @@ function PlayerView({ item, fromStart }: { item: ItemDetail; fromStart: boolean 
               )}
             </>
           )}
+          {menu === 'chapters' &&
+            chapters.map((c, i) => (
+              <MenuItem
+                key={`${c.start_ms}-${i}`}
+                active={chapterNow === i}
+                label={chapterLabel(c, i)}
+                hint={clock(c.start_ms)}
+                onSelect={() => {
+                  setMenu(null);
+                  ctl.current?.seek(c.start_ms);
+                }}
+              />
+            ))}
           {menu === 'quality' &&
             QUALITIES.map((q) => (
               <MenuItem
@@ -433,6 +459,9 @@ function PlayerView({ item, fromStart }: { item: ItemDetail; fromStart: boolean 
               style={{ left: `${pct(pb?.start_ms ?? 0)}%`, width: `${pct(s.available) - pct(pb?.start_ms ?? 0)}%` }}
             />
           )}
+          {marks.map((m, i) => (
+            <span key={i} className="seek-chapter" style={{ left: `${m}%` }} aria-hidden="true" />
+          ))}
           <SeekBar
             duration={duration}
             value={shown}
@@ -511,7 +540,12 @@ function PlayerView({ item, fromStart }: { item: ItemDetail; fromStart: boolean 
               <AudioIcon />
             </MenuButton>
           )}
-          {(textSubs.length > 0 || canSearch) && (
+          {chapters.length > 1 && (
+            <MenuButton label="Chapters" current={menu} id="chapters" setMenu={setMenu}>
+              <ChaptersIcon />
+            </MenuButton>
+          )}
+          {(subs.length > 0 || canSearch) && (
             <MenuButton label="Subtitles" current={menu} id="subtitles" setMenu={setMenu}>
               <SubtitlesIcon />
             </MenuButton>
@@ -619,7 +653,18 @@ function MenuButton({
   );
 }
 
-function MenuItem({ label, active, onSelect }: { label: string; active: boolean; onSelect: () => void }) {
+function MenuItem({
+  label,
+  hint,
+  active,
+  onSelect,
+}: {
+  label: string;
+  /** Muted text after the label (a time, "(burned in)"). */
+  hint?: string;
+  active: boolean;
+  onSelect: () => void;
+}) {
   return (
     <button
       type="button"
@@ -628,6 +673,7 @@ function MenuItem({ label, active, onSelect }: { label: string; active: boolean;
       onClick={onSelect}
     >
       {label}
+      {hint && <span className="menu-item-hint"> {hint}</span>}
     </button>
   );
 }

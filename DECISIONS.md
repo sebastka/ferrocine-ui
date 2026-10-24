@@ -129,6 +129,18 @@ fails), at most 120 px high. External links (TMDB, IMDb, TheTVDB, AniDB, AniList
 tab with `noopener noreferrer`; TMDB, TVDB and the anime sites only for movies and series. The
 formatting is pure and unit-tested (`src/logic/ratings.ts`).
 
+### D7e. Bitmap subtitles are burned in; chapters seek like any seek
+
+- **Bitmap subtitles** (PGS, DVD; `text: false`, including the DVD streams from index 2000) are in
+  the subtitle menu with "(burned in)". Choosing one starts a new session at the playhead with
+  `burn_subtitle`; leaving it (Off, or a text subtitle) starts one without. Text subtitles still
+  switch in the browser without a new session. `planSubtitle` (unit-tested) decides which.
+- **Chapters**: ticks on the seek bar (the one at 0 left out) and a Chapters menu (with two or
+  more chapters) whose entries seek exactly like the seek bar, so a chapter outside the produced
+  HLS range starts a new session there. The item page lists them, collapsed.
+- **Extras** are a row on the movie page whose cards start playing at once (resuming like any
+  item); an extra's own page is the same item page with its type and a link back to the movie.
+
 ### D8. Next episode
 
 At the end of an episode (and in its last 30 s), an "Up next" card offers the next episode:

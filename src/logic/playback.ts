@@ -73,3 +73,23 @@ export function nearEnd(positionMs: number, durationMs: number | null): boolean 
   if (!durationMs) return false;
   return durationMs - positionMs <= 30_000;
 }
+
+/** What selecting a subtitle needs: a new session (to add or drop a burned bitmap) or not. */
+export interface SubtitlePlan {
+  /** Start a new session at the current position with `burn` as `burn_subtitle`. */
+  restart: boolean;
+  /** The bitmap subtitle to burn in, or null. */
+  burn: number | null;
+  /** The text subtitle to show as a WebVTT track, or null. */
+  text: number | null;
+}
+
+/**
+ * Bitmap subtitles (`text: false`) are drawn into the picture by the core, so choosing one, or
+ * leaving one, starts a new session; text subtitles switch client-side.
+ */
+export function planSubtitle(choice: { index: number; text: boolean } | null, burned: number | null): SubtitlePlan {
+  if (choice === null) return { restart: burned !== null, burn: null, text: null };
+  if (!choice.text) return { restart: burned !== choice.index, burn: choice.index, text: null };
+  return { restart: burned !== null, burn: null, text: choice.index };
+}

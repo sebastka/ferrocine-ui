@@ -28,9 +28,10 @@ frames from the films.
   the URL.
 - **Details:** backdrop, poster, title logo, ratings per source (TMDB, IMDb, Rotten Tomatoes,
   Metacritic, AniList, AniDB) and links to the metadata sites, overview, cast and crew, technical information of the file;
-  seasons and episodes with progress; mark played, favorite; "Refresh metadata" for admins.
+  seasons and episodes with progress; a movie's extras (trailers, featurettes…), played in one click; mark played, favorite; "Refresh metadata" for admins.
 - **Player:** custom controls over the whole timeline, also when the core transcodes from the
-  middle of a file; audio track, text subtitles and quality menus; subtitle search and download
+  middle of a file; audio track, subtitles (text ones in the browser, bitmap ones such as PGS and DVD burned in by
+  the core) and quality menus; chapters on the seek bar and in a menu; subtitle search and download
   (OpenSubtitles, through the core) when the server has a provider; keyboard shortcuts; position
   saved every 10 s; "Up next" at the end of an episode.
 - **Search** across movies, series and episodes.
