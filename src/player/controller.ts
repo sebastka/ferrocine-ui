@@ -4,7 +4,15 @@
 import type HlsType from 'hls.js/light';
 import { api, ApiError, sendOnExit, type ItemDetail, type Playback, type SubtitleStream } from '../api.ts';
 import { capabilities } from '../logic/caps.ts';
-import { itemTime, planSeek, QUALITIES, sessionLikelyExpired, type Quality, type Stream } from '../logic/playback.ts';
+import {
+  itemTime,
+  planSeek,
+  planSubtitle,
+  QUALITIES,
+  sessionLikelyExpired,
+  type Quality,
+  type Stream,
+} from '../logic/playback.ts';
 
 const PROGRESS_EVERY_MS = 10_000;
 /** New sessions started in a row after stream errors, without playback resuming in between. */
@@ -23,7 +31,10 @@ export interface PlayerState {
   error: string | null;
   playback: Playback | null;
   audioIndex: number | null;
+  /** The selected subtitle, text (a WebVTT track) or bitmap (burned in), or null. */
   subtitleIndex: number | null;
+  /** The bitmap subtitle the core draws into the picture, or null. */
+  burnIndex: number | null;
   quality: Quality;
 }
 
@@ -67,6 +78,7 @@ export class PlayerController {
       playback: null,
       audioIndex: audio?.index ?? null,
       subtitleIndex: null,
+      burnIndex: null,
       quality: QUALITIES[0]!,
     };
     const on = <K extends keyof HTMLMediaElementEventMap>(type: K, fn: () => void) => {
@@ -159,6 +171,7 @@ export class PlayerController {
         max_height: this.state.quality.maxHeight,
         max_bitrate: this.state.quality.maxBitrate,
         force_transcode: opts.forceTranscode ?? false,
+        burn_subtitle: this.state.burnIndex,
         capabilities: capabilities(),
       });
     } catch (e) {
@@ -182,7 +195,10 @@ export class PlayerController {
       return;
     }
     if (epoch !== this.epoch) return;
-    if (this.state.subtitleIndex !== null) void this.loadSubtitle(this.state.subtitleIndex);
+    // A burned bitmap is in the picture already; only text subtitles come as a track.
+    if (this.state.subtitleIndex !== null && this.state.burnIndex === null) {
+      void this.loadSubtitle(this.state.subtitleIndex);
+    }
     this.video.play().catch(() => this.update({ paused: true, starting: false }));
   }
 
@@ -331,9 +347,16 @@ export class PlayerController {
   }
 
   setSubtitle(index: number | null): void {
-    this.update({ subtitleIndex: index });
-    if (index === null) this.clearSubtitle();
-    else void this.loadSubtitle(index);
+    const stream = index === null ? null : this.subtitles().find((s) => s.index === index);
+    const plan = planSubtitle(stream ? { index: stream.index, text: stream.text } : null, this.state.burnIndex);
+    this.update({ subtitleIndex: index, burnIndex: plan.burn });
+    this.clearSubtitle();
+    if (plan.restart) void this.start(this.position());
+    else if (plan.text !== null) void this.loadSubtitle(plan.text);
+  }
+
+  private subtitles(): SubtitleStream[] {
+    return [...(this.item.media?.subtitles ?? []), ...this.added];
   }
 
   /** Fetch the WebVTT (shifted to the stream's start) and show it as the only text track. */
@@ -351,7 +374,7 @@ export class PlayerController {
       track.kind = 'subtitles';
       track.default = true;
       track.src = this.subtitleUrl;
-      const sub = [...(this.item.media?.subtitles ?? []), ...this.added].find((s) => s.index === index);
+      const sub = this.subtitles().find((s) => s.index === index);
       if (sub?.language) track.srclang = sub.language;
       track.label = sub?.title ?? sub?.language ?? 'Subtitles';
       this.video.appendChild(track);

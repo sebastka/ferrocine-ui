@@ -17,6 +17,7 @@ import {
   resolution,
   runtime as formatRuntime,
 } from '../logic/format.ts';
+import { chapterLabel, extraLabel } from '../logic/extras.ts';
 import { externalLinks, ratingBadges } from '../logic/ratings.ts';
 import { paths } from '../logic/route.ts';
 import { navigate } from '../router.ts';
@@ -27,11 +28,13 @@ const HDR_LABELS: Record<NonNullable<VideoInfo['hdr']>, string> = {
   dolby_vision: 'Dolby Vision',
 };
 
-const playable = (i: ItemSummary) => i.kind === 'movie' || i.kind === 'episode';
+const playable = (i: ItemSummary) => i.kind === 'movie' || i.kind === 'episode' || i.kind === 'extra';
 
 export function Item({ id }: { id: number }) {
   const item = useAsync(`item:${id}`, (signal) => api.item(id, signal));
-  const hasChildren = item.data && (item.data.kind === 'series' || item.data.kind === 'season');
+  // Series have seasons, seasons episodes, and movies their extras.
+  const hasChildren =
+    item.data && (item.data.kind === 'series' || item.data.kind === 'season' || item.data.kind === 'movie');
   const children = useAsync(hasChildren ? `children:${id}` : null, (signal) => api.children(id, signal));
 
   if (item.error) return <ErrorBox error={item.error} onRetry={item.reload} />;
@@ -57,6 +60,9 @@ export function Item({ id }: { id: number }) {
             <h2>Episodes</h2>
             {children.data ? <EpisodeList episodes={children.data} /> : <Spinner />}
           </section>
+        )}
+        {it.kind === 'movie' && children.data && children.data.length > 0 && (
+          <Extras extras={children.data} fallback={it.images.backdrop} />
         )}
         {it.people.length > 0 && <People item={it} />}
         {it.media && <TechInfo item={it} media={it.media} onChange={item.reload} />}
@@ -93,7 +99,8 @@ function Hero({ item, episodes, onChange }: { item: ItemDetail; episodes?: ItemS
     item.rating !== null && item.ratings.length === 0 ? `★ ${item.rating.toFixed(1)}` : null,
     item.media?.video ? resolution(item.media.video.width, item.media.video.height) : null,
   ].filter(Boolean);
-  const poster = item.kind === 'episode' ? null : item.images.poster;
+  const landscape = item.kind === 'episode' || item.kind === 'extra';
+  const poster = landscape ? null : item.images.poster;
   const badges = ratingBadges(item.ratings);
   const links = externalLinks(item.kind, item.provider_ids);
 
@@ -106,8 +113,8 @@ function Hero({ item, episodes, onChange }: { item: ItemDetail; episodes?: ItemS
       )}
       <div className="hero-body">
         {poster !== null && <Artwork src={poster} title={item.title} className="hero-poster" />}
-        {item.kind === 'episode' && item.images.thumb && (
-          <Artwork src={item.images.thumb} title={item.title} className="hero-thumb" />
+        {landscape && (item.images.thumb ?? item.images.backdrop) && (
+          <Artwork src={item.images.thumb ?? item.images.backdrop} title={item.title} className="hero-thumb" />
         )}
         <div className="hero-text">
           {item.series_id !== null && item.series_title && (
@@ -121,6 +128,12 @@ function Hero({ item, episodes, onChange }: { item: ItemDetail; episodes?: ItemS
                   </Link>
                 </>
               )}
+            </p>
+          )}
+          {item.kind === 'extra' && (
+            <p className="hero-parent">
+              {item.parent_id !== null && <Link to={paths.item(item.parent_id)}>← Back to the movie</Link>}
+              <span className="extra-type">{extraLabel(item.extra_type)}</span>
             </p>
           )}
           <HeroTitle item={item} />
@@ -236,6 +249,33 @@ function HeroTitle({ item }: { item: ItemDetail }) {
     );
   }
   return <h1>{item.title}</h1>;
+}
+
+/** A movie's extras: cards that start playing at once. */
+function Extras({ extras, fallback }: { extras: ItemSummary[]; fallback: string | null }) {
+  return (
+    <section className="section">
+      <h2>Extras</h2>
+      <div className="row-scroll row-landscape">
+        {extras.map((e) => (
+          <Link key={e.id} to={paths.play(e.id)} className="card card-landscape" title={`Play ${e.title}`}>
+            <div className="card-media">
+              <Artwork src={e.images.thumb ?? fallback} title={e.title} />
+              <span className="extra-play" aria-hidden="true">
+                <PlayIcon />
+              </span>
+            </div>
+            <div className="card-text">
+              <span className="card-title">{e.title}</span>
+              <span className="card-sub">
+                {[extraLabel(e.extra_type), formatRuntime(e.runtime_ms)].filter(Boolean).join(' · ')}
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 function EpisodeList({ episodes }: { episodes: ItemSummary[] }) {
@@ -357,7 +397,7 @@ function TechInfo({ item, media, onChange }: { item: ItemDetail; media: MediaInf
       s.title,
       s.forced ? 'forced' : null,
       downloaded ? 'downloaded from OpenSubtitles' : s.external ? 'external' : null,
-      s.text ? null : 'image (not shown in the browser)',
+      s.text ? null : 'image (burned in when chosen)',
     ]
       .filter(Boolean)
       .join(' · ');
@@ -395,6 +435,23 @@ function TechInfo({ item, media, onChange }: { item: ItemDetail; media: MediaInf
             <dd>{v}</dd>
           </div>
         ))}
+        {media.chapters && media.chapters.length > 0 && (
+          <div className="tech-row">
+            <dt>Chapters</dt>
+            <dd>
+              <details className="chapters">
+                <summary>{media.chapters.length} chapters</summary>
+                <ol>
+                  {media.chapters.map((c, i) => (
+                    <li key={`${c.start_ms}-${i}`}>
+                      <span className="chapter-time">{clock(c.start_ms)}</span> {chapterLabel(c, i)}
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            </dd>
+          </div>
+        )}
       </dl>
     </section>
   );

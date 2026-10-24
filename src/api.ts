@@ -1,6 +1,8 @@
 // Types and calls of the Ferrocine core API (docs/api.md is the contract).
 
-export type ItemKind = 'movie' | 'series' | 'season' | 'episode';
+export type ItemKind = 'movie' | 'series' | 'season' | 'episode' | 'extra';
+export type ExtraType =
+  'trailer' | 'featurette' | 'behind_the_scenes' | 'deleted_scene' | 'interview' | 'scene' | 'short' | 'extra';
 export type LibraryKind = 'movies' | 'shows';
 export type PlaybackMethod = 'direct' | 'remux' | 'transcode';
 export type HwAccel = 'vaapi' | 'qsv' | 'nvenc';
@@ -69,6 +71,8 @@ export interface ItemSummary {
   user: UserData;
   child_count: number | null;
   unplayed_count: number | null;
+  /** Extras only. */
+  extra_type?: ExtraType | null;
 }
 
 export interface Person {
@@ -118,6 +122,12 @@ export interface MediaInfo {
   video: VideoInfo | null;
   audio: AudioStream[];
   subtitles: SubtitleStream[];
+  chapters?: Chapter[];
+}
+
+export interface Chapter {
+  start_ms: number;
+  title: string | null;
 }
 
 export type ProviderId = 'tmdb' | 'imdb' | 'tvdb' | 'anidb' | 'anilist';
@@ -167,6 +177,8 @@ export interface PlaybackRequest {
   max_height: number | null;
   max_bitrate: number | null;
   force_transcode: boolean;
+  /** A bitmap subtitle (`text: false`) to draw into the picture; forces a transcode. */
+  burn_subtitle: number | null;
   capabilities: Capabilities;
 }
 
@@ -179,6 +191,8 @@ export interface Playback {
   hw_accel: HwAccel | null;
   /** True when an HDR source is transcoded to SDR with tone mapping. */
   tone_mapping: boolean;
+  /** The subtitle index drawn into the picture, if any. */
+  burned_subtitle?: number | null;
   reasons: string[];
 }
 

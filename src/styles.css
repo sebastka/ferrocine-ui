@@ -1665,3 +1665,68 @@ h2 {
     justify-content: center;
   }
 }
+
+/* ---------- Player: chapters, bitmap subtitles */
+
+.seek-chapter {
+  position: absolute;
+  top: 6px;
+  width: 2px;
+  height: 8px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.75);
+  pointer-events: none;
+  z-index: 1;
+}
+.menu-item-hint {
+  color: #aaa;
+  font-size: 0.85em;
+  margin-left: 4px;
+}
+
+/* ---------- Item page: extras, chapters */
+
+.extra-play {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  opacity: 0;
+  background: rgba(0, 0, 0, 0.35);
+  transition: opacity 0.15s;
+  border-radius: var(--radius-sm);
+}
+.extra-play .icon {
+  width: 36px;
+  height: 36px;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+}
+.card:hover .extra-play,
+.card:focus-visible .extra-play {
+  opacity: 1;
+}
+.extra-type {
+  margin-left: 12px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--wash);
+  border: 1px solid var(--border);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.chapters summary {
+  cursor: pointer;
+}
+.chapters ol {
+  margin: 6px 0 0;
+  padding-left: 1.6em;
+}
+.chapter-time {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
