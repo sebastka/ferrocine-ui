@@ -224,8 +224,9 @@ function PlayerView({ item, fromStart }: { item: ItemDetail; fromStart: boolean 
   const chapters = item.media?.chapters ?? [];
   const marks = chapterMarks(chapters, duration);
   const chapterNow = currentChapter(chapters, s?.position ?? 0);
-  // Only movies and episodes have files to find subtitles for.
-  const canSearch = searchAvailable && item.media !== null;
+  // Only movies and episodes have subtitles to search for (extras have no
+  // ids, and the core answers 400 for them).
+  const canSearch = searchAvailable && item.media !== null && item.kind !== 'extra';
   const audio = item.media?.audio ?? [];
   const title =
     item.kind === 'episode'
