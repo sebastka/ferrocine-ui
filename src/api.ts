@@ -165,6 +165,16 @@ export interface Home {
   latest: { library: Pick<Library, 'id' | 'name' | 'kind'>; items: ItemSummary[] }[];
 }
 
+/** Why a search result was found, when not by its shown title. */
+export type SearchMatch =
+  | { kind: 'cast'; text: string; role?: string | null; character?: string | null }
+  | { kind: 'crew'; text: string; role?: string | null }
+  | { kind: 'original_title'; text: string };
+
+export interface SearchResult extends ItemSummary {
+  matched?: SearchMatch | null;
+}
+
 export interface Capabilities {
   containers: string[];
   video_codecs: string[];
@@ -353,7 +363,7 @@ export const api = {
     request<ItemSummary[]>('GET', `/api/v1/items/${id}/children`, undefined, signal),
   refresh: (id: number) => request<void>('POST', `/api/v1/items/${id}/refresh`),
   search: (q: string, signal?: AbortSignal) =>
-    request<ItemSummary[]>('GET', `/api/v1/search${query({ q, limit: 60 })}`, undefined, signal),
+    request<SearchResult[]>('GET', `/api/v1/search${query({ q, limit: 60 })}`, undefined, signal),
   setPlayed: (id: number, played: boolean) => request<void>(played ? 'POST' : 'DELETE', `/api/v1/items/${id}/played`),
   setFavorite: (id: number, favorite: boolean) =>
     request<void>(favorite ? 'POST' : 'DELETE', `/api/v1/items/${id}/favorite`),

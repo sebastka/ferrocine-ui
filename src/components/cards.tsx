@@ -1,5 +1,6 @@
 // Item cards: posters (2:3) in grids, landscape thumbnails (16:9) for episodes and rows.
 
+import type { ReactNode } from 'react';
 import type { ItemSummary } from '../api.ts';
 import { episodeCode } from '../logic/format.ts';
 import { paths } from '../logic/route.ts';
@@ -44,7 +45,16 @@ export function Artwork({ src, title, className }: { src: string | null; title: 
   );
 }
 
-export function ItemCard({ item, shape = 'poster' }: { item: ItemSummary; shape?: CardShape }) {
+export function ItemCard({
+  item,
+  shape = 'poster',
+  note,
+}: {
+  item: ItemSummary;
+  shape?: CardShape;
+  /** An extra line under the subtitle (search: why the item matched). */
+  note?: ReactNode;
+}) {
   const { user } = item;
   const progress = item.runtime_ms && user.position_ms > 0 ? user.position_ms / item.runtime_ms : 0;
   const sub = subtitle(item);
@@ -67,6 +77,7 @@ export function ItemCard({ item, shape = 'poster' }: { item: ItemSummary; shape?
       <div className="card-text">
         <span className="card-title">{item.title}</span>
         {sub && <span className="card-sub">{sub}</span>}
+        {note && <span className="card-note">{note}</span>}
       </div>
     </Link>
   );
@@ -87,11 +98,19 @@ export function Row({ title, items, shape }: { title: string; items: ItemSummary
   );
 }
 
-export function Grid({ items, shape = 'poster' }: { items: ItemSummary[]; shape?: CardShape }) {
+export function Grid<T extends ItemSummary>({
+  items,
+  shape = 'poster',
+  note,
+}: {
+  items: T[];
+  shape?: CardShape;
+  note?: (item: T) => ReactNode;
+}) {
   return (
     <div className={`grid grid-${shape}`}>
       {items.map((it) => (
-        <ItemCard key={it.id} item={it} shape={shape} />
+        <ItemCard key={it.id} item={it} shape={shape} note={note?.(it)} />
       ))}
     </div>
   );

@@ -34,7 +34,8 @@ frames from the films.
   the core) and quality menus; chapters on the seek bar and in a menu; subtitle search and download
   (OpenSubtitles, through the core) when the server has a provider; keyboard shortcuts; position
   saved every 10 s; "Up next" at the end of an episode.
-- **Search** across movies, series and episodes.
+- **Search** across movies, series and episodes by title (original and translated ones too), cast
+  and crew, words in any order; results found by a name say why ("with Keanu Reeves (Neo)").
 - **Administration:** the running configuration (every setting with its value, default, description
   and alternatives; secrets only as set or not), configuration reload (with its report), ffmpeg and hardware acceleration in use,
   library scans (with or without a metadata refresh), active transcodes.
