@@ -35,6 +35,7 @@ import { nearEnd, QUALITIES, resumePosition } from '../logic/playback.ts';
 import { paths } from '../logic/route.ts';
 import { back, navigate } from '../router.ts';
 import { PlayerController, type PlayerState } from '../player/controller.ts';
+import { SeekPreview } from '../player/SeekPreview.tsx';
 import { SubtitleSearch } from '../player/SubtitleSearch.tsx';
 
 const IDLE_MS = 3000;
@@ -75,6 +76,20 @@ function PlayerView({ item, fromStart }: { item: ItemDetail; fromStart: boolean 
   const [volume, setVolume] = useState(() => readVolume());
   const [muted, setMuted] = useState(false);
   const [drag, setDrag] = useState<number | null>(null);
+  // Seek bar preview: the hovered time (mouse), and whether the bar has keyboard focus.
+  const seekRef = useRef<HTMLDivElement>(null);
+  const [hover, setHover] = useState<number | null>(null);
+  const [seekWidth, setSeekWidth] = useState(0);
+  useEffect(() => {
+    const el = seekRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => setSeekWidth(entry?.contentRect.width ?? 0));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const [seekFocused, setSeekFocused] = useState(false);
+  const hoverFrame = useRef(0);
+  useEffect(() => () => cancelAnimationFrame(hoverFrame.current), []);
   const [next, setNext] = useState<ItemSummary | null>(null);
   const [downloaded, setDownloaded] = useState<SubtitleStream[]>([]);
   // Hidden for good after a 503: the core has no subtitle provider configured.
@@ -453,7 +468,39 @@ function PlayerView({ item, fromStart }: { item: ItemDetail; fromStart: boolean 
       )}
 
       <div className="player-controls">
-        <div className="seek">
+        <div
+          className="seek"
+          ref={seekRef}
+          onPointerMove={(e) => {
+            if (e.pointerType !== 'mouse') return;
+            const { clientX } = e;
+            // One update per frame: smooth, without a render per pointer event.
+            cancelAnimationFrame(hoverFrame.current);
+            hoverFrame.current = requestAnimationFrame(() => {
+              const r = seekRef.current?.getBoundingClientRect();
+              if (!r || r.width <= 0 || duration <= 0) return;
+              const ratio = Math.min(1, Math.max(0, (clientX - r.left) / r.width));
+              setHover(ratio * duration);
+            });
+          }}
+          onPointerLeave={() => {
+            cancelAnimationFrame(hoverFrame.current);
+            setHover(null);
+          }}
+        >
+          {(() => {
+            // Dragging (touch, mouse) wins over hovering; keyboard focus shows the playhead.
+            const at = drag ?? hover ?? (seekFocused ? shown : null);
+            return at === null || duration <= 0 || seekWidth <= 0 ? null : (
+              <SeekPreview
+                ms={at}
+                duration={duration}
+                seekWidth={seekWidth}
+                trickplay={item.trickplay ?? null}
+                chapters={chapters}
+              />
+            );
+          })()}
           {s?.available != null && pb?.method !== 'direct' && (
             <div
               className="seek-available"
@@ -466,6 +513,7 @@ function PlayerView({ item, fromStart }: { item: ItemDetail; fromStart: boolean 
           <SeekBar
             duration={duration}
             value={shown}
+            onFocusChange={setSeekFocused}
             onDrag={setDrag}
             onCommit={(ms) => {
               setDrag(null);
@@ -588,9 +636,12 @@ function SeekBar({
   value,
   onDrag,
   onCommit,
+  onFocusChange,
 }: {
   duration: number;
   value: number;
+  /** Keyboard focus (focus-visible) on the bar: the preview follows the playhead. */
+  onFocusChange: (focused: boolean) => void;
   onDrag: (ms: number | null) => void;
   onCommit: (ms: number) => void;
 }) {
@@ -619,6 +670,8 @@ function SeekBar({
       aria-label="Seek"
       aria-valuetext={`${clock(value)} of ${clock(duration)}`}
       onChange={(e) => onDrag(Number(e.target.value))}
+      onFocus={(e) => onFocusChange(e.currentTarget.matches(':focus-visible'))}
+      onBlur={() => onFocusChange(false)}
       onKeyDown={(e) => {
         // Arrow keys are the player's ±10 s shortcuts; leave them to it.
         if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') e.preventDefault();
