@@ -292,6 +292,25 @@ export interface SubtitleDownload {
   hash_match: boolean;
 }
 
+/** A device waiting for approval (Quick Connect). */
+export interface Pairing {
+  code: string;
+  device_name: string;
+  platform: string | null;
+  expires_at: number;
+}
+
+/** A device signed in with a token of its own (TV apps). */
+export interface Device {
+  id: number;
+  name: string;
+  platform: string | null;
+  created_at: number;
+  last_seen_at: number | null;
+  /** The device making the request. */
+  current?: boolean;
+}
+
 /** Answer of POST /api/v1/reload. */
 export interface ReloadReport {
   /** Sections whose changes now apply. */
@@ -385,6 +404,11 @@ export const api = {
   playback: (id: number, req: PlaybackRequest) => request<Playback>('POST', `/api/v1/items/${id}/playback`, req),
   stopSession: (sessionId: string) => request<void>('DELETE', `/api/v1/hls/${enc(sessionId)}`),
   reload: () => request<ReloadReport>('POST', '/api/v1/reload'),
+  pairing: (code: string, signal?: AbortSignal) =>
+    request<Pairing>('GET', `/api/v1/pair/${enc(code)}`, undefined, signal),
+  approvePairing: (code: string) => request<void>('POST', `/api/v1/pair/${enc(code)}/approve`),
+  devices: (signal?: AbortSignal) => request<Device[]>('GET', '/api/v1/me/devices', undefined, signal),
+  signOutDevice: (id: number) => request<void>('DELETE', `/api/v1/me/devices/${id}`),
   searchSubtitles: (id: number, language: string | null, signal?: AbortSignal) =>
     request<{ results: SubtitleSearchResult[] }>(
       'GET',

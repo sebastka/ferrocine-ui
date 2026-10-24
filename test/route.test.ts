@@ -11,6 +11,8 @@ test('parses every route', () => {
   assert.deepEqual(parseRoute('/search', '?q=dune'), { name: 'search', q: 'dune' });
   assert.deepEqual(parseRoute('/admin', ''), { name: 'admin' });
   assert.deepEqual(parseRoute('/profile', ''), { name: 'profile' });
+  assert.deepEqual(parseRoute('/pair', '?code=K7TQM2XD'), { name: 'pair', code: 'K7TQM2XD' });
+  assert.deepEqual(parseRoute('/pair', ''), { name: 'pair', code: '' });
   assert.deepEqual(parseRoute('/item/abc', ''), { name: 'notFound' });
   assert.deepEqual(parseRoute('/nope', ''), { name: 'notFound' });
 });
@@ -23,6 +25,7 @@ test('paths round-trip', () => {
 
 test('return_to stays local', () => {
   assert.equal(safeReturnTo('/item/1?x=2'), '/item/1?x=2');
+  assert.equal(safeReturnTo(paths.pair('K7TQM2XD')), '/pair?code=K7TQM2XD');
   assert.equal(safeReturnTo('//evil.example/'), '/');
   assert.equal(safeReturnTo('/\\evil.example/'), '/');
   assert.equal(safeReturnTo('https://evil.example/'), '/');

@@ -5,7 +5,7 @@ import { useSession } from '../context.ts';
 import { paths } from '../logic/route.ts';
 import { navigate } from '../router.ts';
 import { Avatar } from './Avatar.tsx';
-import { LogoutIcon, UserIcon } from './icons.tsx';
+import { LogoutIcon, TvIcon, UserIcon } from './icons.tsx';
 import { THEME_CHOICES } from '../logic/theme.ts';
 import { setTheme, THEME_LABELS, useTheme } from '../theme.ts';
 import { ThemeIcon } from './ThemeIcon.tsx';
@@ -131,6 +131,18 @@ export function AccountMenu() {
             }}
           >
             <UserIcon /> Profile
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            tabIndex={-1}
+            className="menu-entry"
+            onClick={() => {
+              setOpen(false);
+              navigate(paths.pair());
+            }}
+          >
+            <TvIcon /> Pair a device
           </button>
           <form method="post" action="/auth/logout" role="none">
             <button type="submit" role="menuitem" tabIndex={-1} className="menu-entry">

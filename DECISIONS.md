@@ -219,6 +219,19 @@ edited in files and applied with "Reload configuration". The formatting rules ar
   one). It is not hashed, so nginx serves it with `no-cache` like `index.html`. It repeats the
   parsing rule of `src/logic/theme.ts` (unit-tested) because it must run before any module.
 
+### D10e. Pairing devices (Quick Connect)
+
+- **`/pair`** is where the TV app's QR code points (`?code=`): a prefilled code is looked up at
+  once, a typed one is shown as `XXXX-XXXX` while typed (case, spaces and dashes ignored;
+  characters codes never contain are pointed out). The page shows the device's name and platform
+  and a warning before the Approve button: approving signs a device in as the current user, and a
+  code read from someone else's screen would hand them the account. The rules are pure
+  (`src/logic/pair.ts`, unit-tested).
+- **Signed out**, the usual sign-in screen keeps `/pair?code=…` as `return_to`, so scanning the
+  QR code on a phone that is not signed in comes back to the same code after sign-in.
+- **Devices** are listed on the profile page (most recently used first, as the core sends them)
+  with a sign-out each, confirmed first; the account menu has "Pair a device".
+
 ## Image
 
 ### D11. Hardened nginx, rendered configuration

@@ -1798,3 +1798,130 @@ h2 {
   flex: none;
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------- Pairing (Quick Connect) and devices */
+
+.pair-card {
+  max-width: 520px;
+  margin: 24px auto 0;
+  padding: 28px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+.pair-form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+.pair-code {
+  min-height: 56px;
+  font: 600 1.8rem/1 var(--mono);
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.pair-form .btn {
+  justify-content: center;
+}
+.pair-help {
+  margin: 0;
+  font-size: 0.88rem;
+}
+.pair-form .error-text {
+  margin: 0;
+}
+.pair-device {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: var(--wash);
+}
+.pair-device > .icon {
+  width: 32px;
+  height: 32px;
+  color: var(--accent-ink);
+}
+.pair-device div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.pair-device-name {
+  font-size: 1.15rem;
+  overflow-wrap: anywhere;
+}
+.pair-warning {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--wash);
+}
+.pair-done {
+  text-align: center;
+}
+.pair-done-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--good);
+  color: #fff;
+}
+.pair-done-icon .icon {
+  width: 30px;
+  height: 30px;
+}
+.pair-done .actions {
+  justify-content: center;
+}
+@media (max-width: 560px) {
+  .pair-card {
+    padding: 20px 16px;
+  }
+}
+
+.devices {
+  display: block;
+  margin-top: 16px;
+}
+.devices-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.devices-head h2 {
+  margin: 0;
+}
+.device-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.device {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.device > .icon {
+  color: var(--text-muted);
+}
+.device-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.device-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
