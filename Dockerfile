@@ -14,7 +14,7 @@
 #
 # Images are pinned by digest (multi-arch index); Renovate keeps them up to date.
 
-FROM --platform=$BUILDPLATFORM dhi.io/node:26-alpine-dev@sha256:393f63498dc3739e4a1cc9e618261927d74663ab023b96b38d29c57199702dc6 AS build
+FROM --platform=$BUILDPLATFORM dhi.io/node:26-alpine-dev@sha256:4f971dcdc1fdf59f9d3e84dbd529690c2d15f75ae898fb310acad9c12d7bbdf9 AS build
 WORKDIR /src
 COPY package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
@@ -22,7 +22,7 @@ COPY tsconfig.json vite.config.ts ./
 COPY src ./src
 RUN npm run build
 
-FROM dhi.io/nginx:1-alpine3.24@sha256:6d3811fbc76c5d0652752b39a003769759ccfeb2c1e874bacf99e3d44e5da3b9 AS runtime
+FROM dhi.io/nginx:1-alpine3.24@sha256:7a4e9021737f414ad0f851efb939600690d9d092f51712ce6512bfd0a767ceae AS runtime
 ARG REVISION=unknown
 # The release tag (e.g. 2026-10-23), or edge-<commit>.
 ARG VERSION=dev
